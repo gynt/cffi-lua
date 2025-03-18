@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>cffi-lua</id>
+    <version>0.2.3</version>
+    <title>cffi-lua</title>
+    <authors>gynt</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">AGPL-3.0-or-later</license>
+    <projectUrl>https://github.com/q66/cffi-lua</projectUrl>
+    <repository type="git" url="https://github.com/q66/cffi-lua.git"/>
+    <!--<iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>-->
+    <description>A portable C FFI for Lua 5.4.6</description>
+    <!--<releaseNotes>Summary of changes made in this release of the package.</releaseNotes>-->
+    <tags>Native native Lua FFI CFFI</tags>
+    <dependencies>
+      <dependency id="lua" version="5.4.6" include="native" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="build-x86-5.4.6\RPS.dll" target="build\native\bin\Win32\v143\Release"/>
+    <file src="build-x86-5.4.6\RPS.lib" target="build\native\lib\Win32\v143\Release"/>
+    <!--<file src="*.h" target="build\native\include"/>-->
+    <!-- <file src=".targets" target="build\native"/>
+    <file src="-propertiesui.xml" target="build\native"/> -->
+    <file src="README.md" target="build"/>
+    <file src="README.md" target="build\native\doc"/>
+  </files>
+</package>
