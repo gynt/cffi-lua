@@ -1,4 +1,4 @@
-name: CI
+name: NuGet build for Windows
 
 on: push
 
@@ -17,7 +17,10 @@ jobs:
         uses: microsoft/setup-msbuild@v2
         with:
           vs-version: '[17.0,18.0)' # use v143
-
+        
+      - name: Prepare environment
+        run: bash ./.ci/install-env-windows
+        
       - name: Acquire lua and setup directory "deps"
         run: |
           curl -L -o lua-5.4.6.zip https://www.nuget.org/api/v2/package/lua/5.4.6
@@ -36,6 +39,7 @@ jobs:
           ninja test
           
           popd
+
 
 
 
