@@ -10,6 +10,7 @@
 #include "lua.hh"
 #include "ffi.hh"
 #include "util.hh"
+#include "settings.hh"
 
 /* sets up the metatable for library, i.e. the individual namespaces
  * of loaded shared libraries as well as the primary C namespace.
@@ -18,14 +19,15 @@ struct lib_meta {
     static int gc(lua_State *L) {
         auto *cl = lua::touserdata<lib::c_lib>(L, 1);
       
-        int stack = lua_gettop(L);
-        lua_getglobal(L, "log");
-        lua_pushinteger(L, 2);
-        lua_pushstring(L, "cffi: lib_meta::gc()");
-        lib_meta::tostring(L);
-        lua_call(L, 3, 0);
-        lua_settop(L, stack);
-        
+        if (settings::store::instance().gc_log_lib) {
+          int stack = lua_gettop(L);
+          lua_getglobal(L, "log");
+          lua_pushinteger(L, 2);
+          lua_pushstring(L, "cffi: lib_meta::gc()");
+          lib_meta::tostring(L);
+          lua_call(L, 3, 0);
+          lua_settop(L, stack);
+        }
 
         lib::close(cl, L);
         return 0;
@@ -89,13 +91,15 @@ struct cdata_meta {
     static int gc(lua_State *L) {
         auto &cd = ffi::tocdata(L, 1);
 
-        int stack = lua_gettop(L);
-        lua_getglobal(L, "log");
-        lua_pushinteger(L, 2);
-        lua_pushstring(L, "cffi: cdata_meta::gc()");
-        cdata_meta::tostring(L);
-        lua_call(L, 3, 0);
-        lua_settop(L, stack);
+        if (settings::store::instance().gc_log_cdata) {
+          int stack = lua_gettop(L);
+          lua_getglobal(L, "log");
+          lua_pushinteger(L, 2);
+          lua_pushstring(L, "cffi: cdata_meta::gc()");
+          cdata_meta::tostring(L);
+          lua_call(L, 3, 0);
+          lua_settop(L, stack);
+        }
 
         ffi::destroy_cdata(L, cd);
         return 0;
@@ -1051,6 +1055,12 @@ struct cdata_meta {
         lua_pop(L, 1);
     }
 };
+        
+const char * const options[3] = {
+  "gc_log_cdata",
+  "gc_log_lib",
+  "gc_cdata_tryExcept"
+};
 
 /* the ffi module itself */
 struct ffi_module {
@@ -1600,6 +1610,47 @@ argcheck:
 #endif
     }
 
+
+    static int settings_f(lua_State* L) {
+      if (lua_gettop(L) < 1) {
+        return luaL_error(L, "too few arguments");
+      }
+      int option = luaL_checkoption(L, 1, NULL, options);
+      if (lua_gettop(L) == 1) {
+        bool value = false;
+        if (option == 0) {
+          value = settings::store::instance().gc_log_cdata;
+        }
+        if (option == 1) {
+          value = settings::store::instance().gc_log_lib;
+        }
+        if (option == 2) {
+          value = settings::store::instance().gc_cdata_tryExcept;
+        }
+        lua_pushboolean(L, value);
+        return 1;
+      } 
+      
+      if(lua_gettop(L) == 2) {
+        luaL_checktype(L, 2, LUA_TBOOLEAN);
+        bool value = lua_toboolean(L, 2);
+
+        if (option == 0) {
+          settings::store::instance().gc_log_cdata = value;
+        }
+        if (option == 1) {
+          settings::store::instance().gc_log_lib = value;
+        }
+        if (option == 2) {
+          settings::store::instance().gc_cdata_tryExcept = value;
+        }
+
+        return 0;
+      }
+      
+      return luaL_error(L, "too many arguments");
+    }
+
     static void setup(lua_State *L) {
         static luaL_Reg const lib_def[] = {
             /* core */
@@ -1628,6 +1679,9 @@ argcheck:
             {"toretval", toretval_f},
             {"eval", eval_f},
             {"type", type_f},
+
+            /* settings */
+            {"settings", settings_f},
 
             {nullptr, nullptr}
         };

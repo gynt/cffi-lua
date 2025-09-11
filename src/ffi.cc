@@ -1,6 +1,7 @@
 #include "platform.hh"
 #include "util.hh"
 #include "ffi.hh"
+#include "settings.hh"
 
 namespace ffi {
 
@@ -113,20 +114,26 @@ void destroy_cdata(lua_State *L, cdata &cd) {
                 break;
             }
             #ifdef _WIN32
-            __try {
-                auto &fd = cd.as<fdata>();
-                fdata_free_aux(L, fd);
-            }
-            __except (1) {
+            if (settings::store::instance().gc_cdata_tryExcept) {
+              __try {
+                  auto &fd = cd.as<fdata>();
+                  fdata_free_aux(L, fd);
+              }
+              __except (1) {
 
-                int stack = lua_gettop(L);
-                lua_getglobal(L, "log");
-                lua_pushinteger(L, -1); // Warn
-                lua_pushstring(L, "cffi: cdata_meta::gc()");
-                cd.decl.serialize(L);
-                lua_call(L, 3, 0);
-                lua_settop(L, stack);
+                  int stack = lua_gettop(L);
+                  lua_getglobal(L, "log");
+                  lua_pushinteger(L, -1); // Warn
+                  lua_pushstring(L, "cffi: cdata_meta::gc()");
+                  cd.decl.serialize(L);
+                  lua_call(L, 3, 0);
+                  lua_settop(L, stack);
+              }
+            } else {
+              auto &fd = cd.as<fdata>();
+              fdata_free_aux(L, fd);
             }
+            
             #else
                 auto& fd = cd.as<fdata>();
                 fdata_free_aux(L, fd);

@@ -9,6 +9,7 @@
  */
 
 #include "lua.hh"
+#include "settings.hh"
 
 #if defined(__CYGWIN__) || (defined(_WIN32) && !defined(_XBOX_VER))
 #  ifdef CFFI_LUA_DLL
@@ -25,6 +26,7 @@
 #endif
 
 void ffi_module_open(lua_State *L);
+
 
 extern "C" CFFI_LUA_EXPORT int luaopen_cffi(lua_State *L) {
     ffi_module_open(L);
