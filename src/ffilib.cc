@@ -16,7 +16,18 @@
  */
 struct lib_meta {
     static int gc(lua_State *L) {
-        lib::close(lua::touserdata<lib::c_lib>(L, 1), L);
+        auto *cl = lua::touserdata<lib::c_lib>(L, 1);
+      
+        int stack = lua_gettop(L);
+        lua_getglobal(L, "log");
+        lua_pushinteger(L, 2);
+        lua_pushstring(L, "cffi: lib_meta::gc()");
+        lib_meta::tostring(L);
+        lua_call(L, 3, 0);
+        lua_settop(L, stack);
+        
+
+        lib::close(cl, L);
         return 0;
     }
 
@@ -76,7 +87,17 @@ struct lib_meta {
  */
 struct cdata_meta {
     static int gc(lua_State *L) {
-        ffi::destroy_cdata(L, ffi::tocdata(L, 1));
+        auto &cd = ffi::tocdata(L, 1);
+
+        int stack = lua_gettop(L);
+        lua_getglobal(L, "log");
+        lua_pushinteger(L, 2);
+        lua_pushstring(L, "cffi: cdata_meta::gc()");
+        cdata_meta::tostring(L);
+        lua_call(L, 3, 0);
+        lua_settop(L, stack);
+
+        ffi::destroy_cdata(L, cd);
         return 0;
     }
 

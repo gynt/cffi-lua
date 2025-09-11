@@ -112,7 +112,25 @@ void destroy_cdata(lua_State *L, cdata &cd) {
             if (!cd.decl.function()->variadic()) {
                 break;
             }
-            fdata_free_aux(L, cd.as<fdata>());
+            #ifdef _WIN32
+            __try {
+                auto &fd = cd.as<fdata>();
+                fdata_free_aux(L, fd);
+            }
+            __except (1) {
+
+                int stack = lua_gettop(L);
+                lua_getglobal(L, "log");
+                lua_pushinteger(L, -1); // Warn
+                lua_pushstring(L, "cffi: cdata_meta::gc()");
+                cd.decl.serialize(L);
+                lua_call(L, 3, 0);
+                lua_settop(L, stack);
+            }
+            #else
+                auto& fd = cd.as<fdata>();
+                fdata_free_aux(L, fd);
+            #endif
         }
         default:
             break;
